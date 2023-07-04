@@ -39,14 +39,9 @@ exports.registerUser = async (req, res) => {
         const token = generateToken(user.id);
 
         res.status(200).json({
-            _id: user._id,
-            email: user.email,
-            role: user.role,
-            gender: user.gender,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            profileImage: user.profileImage,
-            dateOfBirth: user.dateOfBirth,
+            status: 'success',
+            message: 'Registered Successfully',
+            data: savedUser,
         });
     } catch (err) {
         console.error(err.message);
@@ -77,15 +72,11 @@ exports.loginUser = async (req, res) => {
         user.save();
 
         res.status(200).json({
-            _id: user._id,
-            email: user.email,
-            role: user.role,
-            gender: user.gender,
-            firstName: user.firstName,
-            lastName: user.lastName,
+            status: 'success',
+            message : 'LoggedIn Successfully',
             token: token,
-            profileImage: user.profileImage,
-            dateOfBirth: user.dateOfBirth,
+            data :user
+            
         });
     } catch (err) {
         console.error(err.message);
