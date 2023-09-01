@@ -19,8 +19,11 @@ const tripAdd = async (req, res, next) => {
                 req.userId = userId;
                 next();
             }
-            else {
-                return res.json({ message: "Adding destination is not for admin" });
+            else if(userRole == "admin"){
+                req.userId = userId;
+                next();
+            
+                
             }
             ;
         }

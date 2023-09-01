@@ -9,6 +9,7 @@
   "author": "aadarsha",
   "license": "ISC",
   "dependencies": {
+    "alert": "^5.1.4",
     "bcrypt": "^5.1.0",
     "config": "^3.3.9",
     "cors": "^2.8.5",

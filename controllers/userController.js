@@ -1,10 +1,12 @@
 const User = require('../models/user');
+const fs = require('fs');
 const Destination = require('../models/destination');
 const { validationResult } = require('express-validator');
 const upload = require('../middleware/upload');
 const path = require('path');
 const { profile } = require('console');
 const bcrypt = require('bcrypt');
+const UserVerification = require('../models/userVerification');
 
 // Get user by ID
 exports.getUserById = async (req, res) => {
@@ -20,7 +22,6 @@ exports.getUserById = async (req, res) => {
     res.status(500).send('Server Error');
   }
 };
-
 // Get destinations added by a user
 exports.getDestinationsByUser = async (req, res) => {
   try {
@@ -62,20 +63,34 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).send('Server Error');
   }
 };
+
+
 exports.updateUserById = async (req, res) => {
   try {
     const userId = req.params.id;
 
-    const { dateOfBirth } = req.body;
+    const { smoker, drinker, aboutMe, language, height, weight, lookingFor } = req.body;
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    const languages = req.body.languages ? req.body.languages.split(',') : [];
+  
 
+    let updatedFields = {
+      smoker,
+      drinker,
+      aboutMe,
+      languages,
+      height,
+      weight,
+      lookingFor,
+      profileImage:req.file && req.file.path
+    };
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { $set: { profileImage: req.files.map(file => file.path), dateOfBirth } },
+      { $set: updatedFields },
       { new: true }
     );
 
@@ -89,16 +104,17 @@ exports.updateUserById = async (req, res) => {
       { $set: { 'addedBy.userProfileImage': updatedUser.profileImage } }
     );
 
-    res.status(200).json(updatedUser);
+    res.status(200).json({
+      status: 'success',
+      message: 'User updated successfully',
+    });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 };
+
 // Change password route
-
-
-
 exports.changePassword = async (req, res) => {
   const userId = req.params.id;
   const { newPassword, confirmPassword } = req.body;
@@ -106,12 +122,7 @@ exports.changePassword = async (req, res) => {
   try {
     // Retrieve the user from the database
     const user = await User.findByIdAndUpdate(userId);
-    // Verify that the entered current password matches the one stored in the database
-    // const passwordsMatch = await bcrypt.compare(currentPassword, user.password);
-    // if (!passwordsMatch) {
-    //   return res.status(401).json({ message: 'Current password is incorrect' });
-    // }
-    // Verify that the new password and confirm password match
+
     if (newPassword !== confirmPassword) {
       return res.status(400).json({ message: 'New password and confirm password do not match' });
     }
@@ -122,12 +133,142 @@ exports.changePassword = async (req, res) => {
 
     await user.save();
     // Password changed successfully
-    return res.status(200).json({ message: 'Password changed successfully' });
+    return res.status(200).json({
+      status: 'success',
+      message: 'Password changed successfully'
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'An error occurred while changing the password' });
   }
 };
+
+// Email verified
+
+exports.sendEmail = async (req, res) => {
+  const otp = Math.floor(1000 + Math.random() * 9000);
+  const userId = req.params.id;
+  console.log(userId);
+ const email = await User.findById(userId).select('email');
+  console.log(email['email']);
+  try {
+    const user = await User.findByIdAndUpdate(userId);
+    user.otp = otp;
+    await user.save();
+    const nodemailer = require("nodemailer");
+    const { google } = require("googleapis");
+
+    async function sendEmail() {
+      const OAuth2Client = new google.auth.OAuth2(
+        process.env.CLIENT_ID,
+        process.env.CLIENT_SECRET,
+        "https://developers.google.com/oauthplayground"
+      );
+
+      OAuth2Client.setCredentials({
+        access_token: process.env.ACCESS_TOKEN,
+        refresh_token: process.env.REFRESH_TOKEN,
+      });
+
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          type: "OAuth2",
+          user: process.env.AUTH_EMAIL,
+          clientId: process.env.CLIENT_ID,
+          clientSecret: process.env.CLIENT_SECRET,
+          refreshToken: process.env.REFRESH_TOKEN,
+          accessToken: OAuth2Client.getAccessToken(),
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.AUTH_EMAIL,
+        to: email['email'],
+        subject: "OTP for email verification",
+        text: `Your OTP for email verification is ${otp}`,
+      };
+
+     
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(otp.toString(), salt);
+      const userVerification = await new UserVerification({
+        userId: userId,
+        otp: hash,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 600000,
+        
+
+      });
+      await userVerification.save();
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Error sending email:", error);
+        } else {
+          console.log("Email sent:", info.response);
+        }
+      });
+    }
+
+    sendEmail();
+    return res.status(200).json({
+      status: 'success',
+      message: 'OTP sent successfully',
+      data: {
+        userId: userId,
+        email: email['email'],
+      }
+    });
+  }
+  catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'An error occurred while sending OTP' });
+  }
+
+}
+
+exports.verifyEmail = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    console.log(userId);
+    const otp = req.params.otp;
+    console.log(otp);
+    const userVerificationRecords = await UserVerification.find({ userId: userId });
+    if (userVerificationRecords.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    } else {
+      const userVerificationRecord = userVerificationRecords[userVerificationRecords.length - 1];
+      const {expiresAt} =userVerificationRecord;
+      const hash = userVerificationRecord.otp;
+      if (Date.now() > expiresAt) {
+         await UserVerification.findByIdAndDelete(userVerificationRecord.userId);
+        return res.status(400).json({ message: 'OTP expired' });
+      } else {
+        const isMatch = await bcrypt.compare(otp, hash);
+        if (!isMatch) {
+          return res.status(400).json({ message: 'OTP incorrect' });
+        } else {
+          await User.findByIdAndUpdate(userId, { isEmailVerified: true });
+          await UserVerification.findByIdAndDelete(userVerificationRecord._id);
+
+          return res.status(200).json({
+            status: 'success',
+            message: 'Email verified successfully',
+            data: {
+              userId: userId,
+            }
+          });
+        }
+      }
+    }
+
+   }
+  catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'An error occurred while verifying OTP' });
+  }
+}
 
 
 

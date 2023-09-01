@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const passport = require('passport');
 const cors = require('cors');
+const alert = require('alert');
 require('dotenv').config();
 // Initialize Express app
 const app = express();
@@ -15,7 +16,7 @@ app.use(express.json());
 app.use(cors());
 
 // MongoDB Configuration
-mongoose.connect('mongodb+srv://tripmate:1234@cluster0.oel14cc.mongodb.net/tripMate')
+mongoose.connect(process.env.MONGOOSE)
 mongoose.connection.on('error', err => {
     console.log('database connection failed');
 });
@@ -54,6 +55,10 @@ const port = process.env.PORT || 3000;
 
 // });
 
+
+
 app.listen(port, () => {
     console.log('Server running ');
+    // const message = 'Server running\nWeb view:' + port;
+    // alert(message);
 });

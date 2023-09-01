@@ -8,7 +8,9 @@ const {
     getAllUsers,
     updateUserById,
     changePassword,
-    getJoinedDestinations
+    getJoinedDestinations,
+    sendEmail,
+    verifyEmail,
 
 } = require('../controllers/userController');
 const { authenticateToken } = require('../middleware/authMiddleware');
@@ -26,7 +28,7 @@ router.get('/destinations/joined', tripAdd, getJoinedDestinations);
 
 // Update user by ID
 router.put(
-    '/:id', tripAdd, upload.array('profileImage', 3),
+    '/:id', tripAdd, upload.single('profileImage'),
     [
         // check('firstName', 'First name is required').notEmpty(),
         // check('lastName', 'Last name is required').notEmpty(),
@@ -37,6 +39,9 @@ router.put(
     updateUserById
 );
 router.put('/:id/changepassword', tripAdd, changePassword);
+
+router.post('/:id/sendEmail',  sendEmail);
+router.post('/:id/verifyEmail/:otp',  verifyEmail);
 
 
 // router.post('/:id/photo', authenticateToken, upload.single('profileImage'), uploadPhoto);

@@ -20,7 +20,7 @@ const tripAdd = require('../middleware/tripAdd');
 
 // Add a new destination    
 router.post(
-    '/',
+    '/:id',
     tripAdd,
     upload.single('placeImage'),
     [
@@ -29,6 +29,7 @@ router.post(
         body('startDate').notEmpty().withMessage('Start date is required'),
         body('endDate').notEmpty().withMessage('End date is required'),
         body('peopleLooking').notEmpty().withMessage('peopleLooking is required'),
+        body('placeImage')
 
 
     ],
@@ -61,7 +62,7 @@ router.put(
 router.delete('/:id', tripAdd, deleteDestination);
 //join destination
 router.post('/:destinationId/join', tripAdd, joinDestination);
-router.put('/:destinationId/accept/:userId', acceptTheUser);
-router.delete('/:destinationId/member/:userId', deleteMember);
+router.put('/:destinationId/accept/:userId',tripAdd, acceptTheUser);
+router.delete('/:destinationId/member/:userId',tripAdd, deleteMember);
 
 module.exports = router;

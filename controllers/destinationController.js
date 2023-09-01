@@ -10,37 +10,43 @@ const Destination = require('../models/destination');
 exports.addDestination = async (req, res) => {
     try {
         const errors = validationResult(req);
+        
 
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
         const { name, description, startDate, endDate, peopleLooking } = req.body;
-
-        const user = await User.findById(req.userId);
+        const userId = req.params.id;
+        const user = await User.findById(userId);
 
         if (!user) {
             return res.status(404).json({ msg: 'User not found' });
         }
 
-        const destination = new Destination({
+
+
+        const destinations = new Destination({
             name,
             description,
             startDate,
             endDate,
             peopleLooking,
-            placeImage: req.file.path,
+            
             // purpose,
             addedBy: {
-                userId: req.userId,
+                userId: userId,
                 userName: `${user.firstName} ${user.lastName}`,
                 userProfileImage: user.profileImage// Add user's profile image
             },
         });
 
-        await destination.save();
+        await destinations.save();
 
-        res.status(200).json(destination);
+        res.status(200).json({
+            status: "success",
+            message: "Destination added successfully",  
+        });
     } catch (err) {
         console.error(err.message);
         res.status(500).json({
@@ -53,7 +59,11 @@ exports.addDestination = async (req, res) => {
 exports.getAllDestinations = async (req, res) => {
     try {
         const destinations = await Destination.find();
-        res.status(200).json(destinations);
+        res.status(200).json({
+            status : 'success',
+            destinations : destinations,
+        }
+            );
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -100,7 +110,10 @@ exports.updateDestination = async (req, res) => {
         }
         await destination.save();
 
-        res.status(200).json(destination);
+        res.status(200).json({
+            status: "success",
+            message: "Destination updated successfully",
+        });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -117,7 +130,10 @@ exports.deleteDestination = async (req, res) => {
 
         await Destination.findByIdAndRemove(req.params.id);
 
-        res.status(200).json({ message: 'Destination removed' });
+        res.status(200).json({
+            status: "success",
+            message: 'Destination removed'
+        });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

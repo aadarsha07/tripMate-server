@@ -24,7 +24,6 @@ const destinationSchema = new mongoose.Schema({
     },
     placeImage: {
         type: String,
-        required: true,
     },
     // purpose: {
     //     type: String,
@@ -41,11 +40,11 @@ const destinationSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        userProfileImage: [
+        userProfileImage: 
             {
                 type: String,
             },
-        ],
+        
     },
     members: [
         {
@@ -62,10 +61,10 @@ const destinationSchema = new mongoose.Schema({
                 type: Date,
 
             },
-            memberProfileImage: [{
+            memberProfileImage: {
                 type: String,
                 
-            }],
+            },
             status: {
                 type: String,
                 enum: ['Pending', 'Accepted'],

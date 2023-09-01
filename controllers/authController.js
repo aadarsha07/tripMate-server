@@ -12,15 +12,16 @@ exports.registerUser = async (req, res) => {
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
-        const { firstName, lastName, email, password, gender, dateOfBirth, role } = req.body;
+        const { firstName, lastName, email, password, gender, dateOfBirth, role,height ,weight,qualification,state,city,maritalStatus,isEmailVerified,languages} = req.body;
 
         let user = await User.findOne({ email });
 
         if (user) {
             return res.status(400).json({ message: 'User already exists' });
         }
+        const interests = req.body.interests;
 
-
+        const profileImage = req.file && req.file.path;
         user = new User({
             firstName,
             lastName,
@@ -29,7 +30,16 @@ exports.registerUser = async (req, res) => {
             gender,
             dateOfBirth,
             role,
-            profileImage: req.files.map(file => file.path)
+            height,
+            languages,
+            weight,
+            qualification,
+            city,
+            state,
+            maritalStatus,
+            profileImage,
+            interests,
+            isEmailVerified,
         });
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
@@ -41,7 +51,7 @@ exports.registerUser = async (req, res) => {
         res.status(200).json({
             status: 'success',
             message: 'Registered Successfully',
-            data: savedUser,
+            id: user._id,
         });
     } catch (err) {
         console.error(err.message);
@@ -75,8 +85,12 @@ exports.loginUser = async (req, res) => {
             status: 'success',
             message : 'LoggedIn Successfully',
             token: token,
-            data :user
-            
+            userId: user._id,
+            role: user.role,
+            email: user.email,
+            isEmailVerified: user.isEmailVerified,
+            otp: user.otp,
+    
         });
     } catch (err) {
         console.error(err.message);
