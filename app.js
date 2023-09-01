@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(cors());
 
 // MongoDB Configuration
-mongoose.connect(process.env.MONGODB_URL)
+mongoose.connect('mongodb+srv://tripmate:1234@cluster0.oel14cc.mongodb.net/tripMate')
 mongoose.connection.on('error', err => {
     console.log('database connection failed');
 });
