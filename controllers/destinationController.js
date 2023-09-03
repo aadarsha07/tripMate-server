@@ -37,7 +37,8 @@ exports.addDestination = async (req, res) => {
             addedBy: {
                 userId: userId,
                 userName: `${user.firstName} ${user.lastName}`,
-                userProfileImage: user.profileImage// Add user's profile image
+                userProfileImage: user.profileImage,
+                isVerified:user.isVerified
             },
         });
 
@@ -165,6 +166,8 @@ exports.joinDestination = async (req, res) => {
             status: 'Pending',
             memberDateOfBirth: user.dateOfBirth,
             memberProfileImage,
+            isVerified:user.isVerified
+        
 
         };
         destination.members.push(newMember);

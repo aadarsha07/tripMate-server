@@ -1,34 +1,22 @@
 
 const express = require('express');
 const router = express.Router();
-const { body } = require('express-validator');
+
+
+const { verifyUser, unverifyUser,addPopularPlace, getAllPopularPlaces,deletePopularPlace,editPopularPlace} = require('../controllers/adminController');
 const upload = require('../middleware/upload');
 
-const { registerAdmin, loginAdmin } = require('../controllers/adminController');
 
-// Register a new admin
 
-router.post(
-    '/register',
-    upload.array('profileImage', 3),
-    [
-        body('email').isEmail().withMessage('Invalid email'),
 
-        body('password').notEmpty().withMessage('Password is required'),
-        body('role'),
-    ],
-    registerAdmin
-);
 
-// Login admin
-
-router.post(
-    '/login',
-    [
-        body('email').isEmail().withMessage('Invalid email'),
-        body('password').notEmpty().withMessage('Password is required'),
-    ],  
-    loginAdmin
-);
+router.post('/popularPlaces',
+    upload.single('image'),
+    addPopularPlace);
+router.get('/popularPlaces', getAllPopularPlaces);
+router.put('/popularPlaces/:id', upload.single('image'), editPopularPlace);
+router.delete('/popularPlaces/:id', deletePopularPlace);
+router.post('/verifyUser/:id', verifyUser);
+router.post('/unverifyUser/:id', unverifyUser);
 
 module.exports = router;

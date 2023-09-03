@@ -44,14 +44,21 @@ exports.registerUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
 
+        
+        const token = generateToken(user._id, user.role);
+        user.token = token;
         savedUser = await user.save();
 
-        const token = generateToken(user.id);
+        
 
         res.status(200).json({
             status: 'success',
             message: 'Registered Successfully',
-            id: user._id,
+            userId: user._id,
+            email: user.email,
+            role: user.role,
+            token: token,
+            isEmailVerified: user.isEmailVerified,
         });
     } catch (err) {
         console.error(err.message);

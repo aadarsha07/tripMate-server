@@ -24,7 +24,7 @@ router.get('/:id/destinations', tripAdd, getDestinationsByUser);
 
 // Get all users
 router.get('/', tripAdd, getAllUsers);
-router.get('/destinations/joined', tripAdd, getJoinedDestinations);
+router.get('/destinations/joined/:id', tripAdd, getJoinedDestinations);
 
 // Update user by ID
 router.put(

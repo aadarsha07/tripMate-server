@@ -43,7 +43,11 @@ const destinationSchema = new mongoose.Schema({
         userProfileImage: 
             {
                 type: String,
-            },
+        },
+        isVerified: {
+            type: Boolean,
+        }
+
         
     },
     members: [
@@ -70,6 +74,9 @@ const destinationSchema = new mongoose.Schema({
                 enum: ['Pending', 'Accepted'],
                 default: 'Pending',
             },
+            isVerified: {
+                type: Boolean,
+            }
         },
     ],
 });

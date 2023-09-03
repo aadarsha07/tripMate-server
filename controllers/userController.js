@@ -39,7 +39,7 @@ exports.getDestinationsByUser = async (req, res) => {
 //get all joined destinations
 exports.getJoinedDestinations = async (req, res) => {
   try {
-    const userId = req.userId; // Retrieve the user ID from the authenticated user
+    const userId = req.params.id; // Retrieve the user ID from the authenticated user
 
     // Find destinations where the user is a member
     const destinations = await Destination.find({ 'members.userId': userId });
@@ -75,7 +75,7 @@ exports.updateUserById = async (req, res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const languages = req.body.languages ? req.body.languages.split(',') : [];
+    const languages = req.body.languages;
   
 
     let updatedFields = {
@@ -101,7 +101,12 @@ exports.updateUserById = async (req, res) => {
     // Update profile image in destinations where the user is the creator
     await Destination.updateMany(
       { 'addedBy.userId': userId },
-      { $set: { 'addedBy.userProfileImage': updatedUser.profileImage } }
+      {
+        $set: {
+          'addedBy.userProfileImage': updatedUser.profileImage,
+          
+        }
+      }
     );
 
     res.status(200).json({
@@ -116,32 +121,44 @@ exports.updateUserById = async (req, res) => {
 
 // Change password route
 exports.changePassword = async (req, res) => {
-  const userId = req.params.id;
-  const { newPassword, confirmPassword } = req.body;
 
+  
   try {
-    // Retrieve the user from the database
-    const user = await User.findByIdAndUpdate(userId);
+    const userId = req.params.id;
+ 
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+ const { newPassword, confirmPassword } = req.body;
+ 
 
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({ message: 'New password and confirm password do not match' });
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ message: 'Passwords do not match' });
+  }
+ const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(newPassword, salt);
+      const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { password: hash } },
+      { new: true }
+      );
+        
+    if (!updatedUser) {
+      return res.status(404).json({ msg: 'User not found' });
     }
-    // Generate a bcrypt hash for the new password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-    // Update the user's password in the database with the new bcrypt hash
-
-    await user.save();
-    // Password changed successfully
-    return res.status(200).json({
+    res.status(200).json({
       status: 'success',
-      message: 'Password changed successfully'
+      message: 'Password updated successfully',
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'An error occurred while changing the password' });
+    res.status(500).json({ message: 'Server error' });
   }
-};
+
+}
+
+  
 
 // Email verified
 
@@ -185,8 +202,12 @@ exports.sendEmail = async (req, res) => {
       const mailOptions = {
         from: process.env.AUTH_EMAIL,
         to: email['email'],
-        subject: "OTP for email verification",
-        text: `Your OTP for email verification is ${otp}`,
+        subject: "TripMate OTP Verification Email",
+        text: `Your OTP to Register in tripMate application is ${otp},
+Please do not share this OTP with anyone for security reasons.
+OTP will expire in 10 minutes.
+        Thank you for using TripMate.
+        `,
       };
 
      
